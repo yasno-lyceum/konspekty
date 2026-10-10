@@ -49,6 +49,8 @@ button,input{font:inherit;color:inherit}
 .tab{text-decoration:none;border:0;background:transparent;padding:7px 14px;border-radius:999px;cursor:pointer;font-weight:600;font-size:14px;color:var(--muted);display:flex;align-items:center;gap:7px}
 .tab i{width:8px;height:8px;border-radius:50%;background:var(--c)}
 .tab[aria-selected="true"]{background:var(--surface);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.08)}
+.back{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font-weight:600;text-decoration:none;font-size:14px}
+.back:hover{border-color:var(--accent)}
 .toc-btn{display:none;border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:7px 14px;font-weight:600;cursor:pointer}
 
 .wrap{max-width:1240px;margin:0 auto;padding-inline:16px;padding-block:20px 60px;display:grid;grid-template-columns:300px minmax(0,1fr);gap:28px;align-items:start}
@@ -152,12 +154,16 @@ h2::after{content:"";flex:1;height:1px;background:var(--line)}
 .pager button:last-child{text-align:right;margin-left:auto}
 
 @media (max-width:880px){
+  .back{padding:6px 10px;font-size:13px}
   .wrap{grid-template-columns:minmax(0,1fr)}
   aside{position:static;max-height:none;display:none}
   aside.open{display:block}
-  .toc-btn{display:inline-block}
+  .back{margin-left:auto;border:1px solid var(--line);background:var(--surface);color:var(--ink);border-radius:999px;padding:7px 14px;font-weight:600;text-decoration:none;font-size:14px}
+.back:hover{border-color:var(--accent)}
+.toc-btn{display:inline-block}
   .tabs{margin-left:0;order:3;width:100%;justify-content:space-between}
   .tabs{display:grid;grid-template-columns:1fr 1fr;border-radius:14px}
+  .tab:last-child:nth-child(odd){grid-column:1/-1}
   .tab{flex:1 1 auto;justify-content:center;padding:7px 6px;font-size:12.5px;gap:5px;white-space:nowrap}
   .terms{grid-template-columns:1fr}
   .terms dt{border-top:1px solid var(--line)}
@@ -200,13 +206,15 @@ DATA.forEach(s => { s.flat = []; s.themes.forEach((t, ti) => t.lessons.forEach((
   l.id = s.id + "-" + s.flat.length; l.subj = s; l.theme = t; l.ti = ti; s.flat.push(l); LES[l.id] = l; })); });
 
 let cur = { s: DATA[0].id, id: DATA[0].flat[0].id };
-if (DATA.length === 1) document.getElementById("tabs").hidden = true;
+if (DATA.length === 1) { document.getElementById("tabs").hidden = true;
+  const bk = document.createElement("a"); bk.className = "back"; bk.href = "index.html#k10"; bk.textContent = "← Усі предмети";
+  document.querySelector(".top-in").appendChild(bk); }
 try { const h = location.hash.slice(1); if (LES[h]) cur = { s: LES[h].subj.id, id: h }; else { const last = localStorage.getItem("yasno-last"); if (last && LES[last]) cur = { s: LES[last].subj.id, id: last }; } } catch(e){}
 
 const tabs = document.getElementById("tabs");
 DATA.forEach(s => {
   const b = document.createElement("button");
-  b.className = "tab"; b.role = "tab"; b.style.setProperty("--c", COLORS[s.id]);
+  b.className = "tab"; b.role = "tab"; b.style.setProperty("--c", COLORS[s.id] || COLORS[s.id.replace(/\d+$/, "")]);
   b.innerHTML = "<i></i>" + esc(s.short); b.dataset.s = s.id;
   b.onclick = () => { if (cur.s !== s.id) open(s.flat[0].id); };
   tabs.appendChild(b);
@@ -246,7 +254,7 @@ function makeQuiz(l){
 
 function renderToc(){
   const s = DATA.find(x => x.id === cur.s);
-  document.documentElement.style.setProperty("--subj", COLORS[s.id]);
+  document.documentElement.style.setProperty("--subj", COLORS[s.id] || COLORS[s.id.replace(/\d+$/, "")]);
   [...tabs.children].forEach(b => b.setAttribute("aria-selected", b.dataset.s === s.id));
   const qv = norm(document.getElementById("search").value || "");
   const toc = document.getElementById("toc"); toc.innerHTML = "";
@@ -280,7 +288,7 @@ function renderLesson(){
   const A = document.getElementById("art");
   let h = '<div class="eyebrow">' + esc(s.name) + " · " + esc(l.theme.name) + "</div>";
   h += "<h1>" + esc(l.t) + "</h1><div class=\"meta\">";
-  h += '<span class="chip">' + (s.id === "zu" ? "Заняття " : s.id === "pe" ? "Конспект " : s.id === "tech" ? "Тема " : "Урок ") + esc(l.n) + "</span>";
+  h += '<span class="chip">' + (s.id === "zu" ? "Заняття " : s.id.startsWith("pe") ? "Конспект " : s.id === "tech" ? "Тема " : "Урок ") + esc(l.n) + "</span>";
   if (l.noquiz) h += '<span class="chip">Творчий проєкт</span>';
   if (l.book) h += '<a class="chip" href="' + esc(l.book.href) + '" target="_blank" rel="noopener">' + esc(l.book.label) + ' ↗</a>';
   if (l.k) h += '<span class="chip">Уроки за КТП: ' + esc(l.k.replace(/^Уроки за КТП:\s*/, "")) + "</span>";
